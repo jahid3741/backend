@@ -15,7 +15,12 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
-app.use(cors({ origin: "http://localhost:3000" })); // Lets Next.js talk to us
+app.use(
+  cors({
+    origin: "*", // 🔥 This star allows your Vercel frontend to connect!
+    credentials: true,
+  }),
+); // Lets Next.js talk to us
 app.use(express.json());
 
 // Connect to MongoDB
@@ -28,6 +33,7 @@ mongoose
 app.use("/api/items", itemRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Genova API is running smoothly!" });
