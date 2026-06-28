@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 4000;
 // Middleware
 app.use(
   cors({
-    origin: "*", // 🔥 This star allows your Vercel frontend to connect!
+    origin: "https://backend-l0ha.onrender.com", // 🔥 This star allows your Vercel frontend to connect!
     credentials: true,
   }),
 ); // Lets Next.js talk to us
