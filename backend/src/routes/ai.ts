@@ -57,7 +57,7 @@ router.post("/generate", async (req, res) => {
       "You are an expert AI assistant. Provide a professional, detailed and helpful response.";
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
     });
 
     const fullPrompt = `${systemPrompt}
