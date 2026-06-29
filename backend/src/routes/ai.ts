@@ -13,7 +13,7 @@ if (!process.env.GEMINI_API_KEY) {
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Protect all AI routes
-router.use(requireAuth);
+// router.use(requireAuth);
 
 // ==========================================================
 // AI SYSTEM PROMPTS
@@ -43,42 +43,24 @@ const systemPrompts: Record<string, string> = {
 // ==========================================================
 router.post("/generate", async (req, res) => {
   try {
+    console.log("========== AI REQUEST ==========");
+    console.log(req.body);
+    console.log("===============================");
+
     const { prompt, toolSlug } = req.body;
 
-    if (!prompt || typeof prompt !== "string") {
-      return res.status(400).json({
-        success: false,
-        error: "Prompt is required.",
-      });
-    }
-
-    const systemPrompt =
-      systemPrompts[toolSlug] ??
-      "You are an expert AI assistant. Provide a professional, detailed and helpful response.";
-
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3.5-flash",
-    });
-
-    const fullPrompt = `${systemPrompt}
-
-User Request:
-${prompt}`;
-
-    const result = await model.generateContent(fullPrompt);
-
-    const output = result.response.text();
-
-    return res.status(200).json({
+    return res.json({
       success: true,
-      output,
+      output: `Backend received:
+Prompt = ${prompt}
+
+Tool = ${toolSlug}`,
     });
   } catch (error: any) {
-    console.error("AI Error:", error);
+    console.error(error);
 
     return res.status(500).json({
-      success: false,
-      error: error.message || "AI Generation Failed",
+      error: error.message,
     });
   }
 });
