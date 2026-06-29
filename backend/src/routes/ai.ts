@@ -41,26 +41,60 @@ const systemPrompts: Record<string, string> = {
 // ==========================================================
 // AI GENERATOR
 // ==========================================================
+// ==========================================================
+// AI GENERATOR
+// ==========================================================
 router.post("/generate", async (req, res) => {
   try {
-    console.log("========== AI REQUEST ==========");
-    console.log(req.body);
-    console.log("===============================");
-
     const { prompt, toolSlug } = req.body;
 
-    return res.json({
-      success: true,
-      output: `Backend received:
-Prompt = ${prompt}
+    if (!prompt || !toolSlug) {
+      return res.status(400).json({
+        success: false,
+        error: "Prompt and toolSlug are required.",
+      });
+    }
 
-Tool = ${toolSlug}`,
+    const systemPrompt =
+      systemPrompts[toolSlug] ??
+      "You are a professional AI assistant. Provide accurate, detailed and helpful answers.";
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+    });
+
+    const fullPrompt = `
+${systemPrompt}
+
+==============================
+
+USER REQUEST:
+
+${prompt}
+
+==============================
+
+Respond professionally.
+`;
+
+    const result = await model.generateContent(fullPrompt);
+
+    const response = result.response;
+
+    const output = response.text();
+
+    return res.status(200).json({
+      success: true,
+      output,
     });
   } catch (error: any) {
+    console.error("========== GEMINI ERROR ==========");
     console.error(error);
+    console.error("==================================");
 
     return res.status(500).json({
-      error: error.message,
+      success: false,
+      error: error.message || "AI Generation Failed",
     });
   }
 });
