@@ -21,9 +21,6 @@ const systemPrompts = {
     "magic-cover-letter": "Write a personalized professional cover letter that sounds natural and persuasive.",
     "cold-email": "Write a concise networking email under 100 words that encourages a hiring manager to reply.",
 };
-// ====================================================
-// AI GENERATOR
-// ====================================================
 router.post("/generate", async (req, res) => {
     try {
         const { prompt, toolSlug } = req.body;
@@ -56,9 +53,6 @@ ${prompt}`,
         });
     }
 });
-// ====================================================
-// RECOMMENDATIONS
-// ====================================================
 router.post("/recommendations", async (req, res) => {
     try {
         const { viewedItemIds } = req.body;
@@ -90,3 +84,4 @@ router.post("/recommendations", async (req, res) => {
     }
 });
 exports.default = router;
+//# sourceMappingURL=ai.js.map
