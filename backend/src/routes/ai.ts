@@ -1,49 +1,41 @@
 import { Router } from "express";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { requireAuth } from "../middleware/auth";
+import { GoogleGenAI } from "@google/genai";
 import Item from "../models/Item";
 
 const router = Router();
 
-// Check API Key
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY is missing.");
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 
-// Protect all AI routes
-// router.use(requireAuth);
-
-// ==========================================================
-// AI SYSTEM PROMPTS
-// ==========================================================
 const systemPrompts: Record<string, string> = {
   "mock-interview":
     "You are a senior FAANG engineering manager. Conduct a realistic behavioral interview. Critique answers using the STAR method and provide an ideal answer.",
 
   "system-design":
-    "You are a Principal Software Architect. Review the user's design, discuss scalability, bottlenecks, databases, caching, load balancing, APIs and security.",
+    "You are a Principal Software Architect. Review the user's design, discuss scalability, bottlenecks, databases, caching, APIs, security and scaling.",
 
   "bullet-enhancer":
-    "You are a Silicon Valley recruiter. Rewrite weak resume bullet points into powerful ATS-friendly achievements with metrics.",
+    "You are an elite Silicon Valley recruiter. Rewrite weak resume bullet points into strong ATS-friendly bullet points with measurable impact.",
 
   "ats-matcher":
-    "You are an ATS system. Compare the user's resume with the job description, calculate an approximate ATS score, list missing keywords and improvements.",
+    "You are an ATS resume analyzer. Compare the resume against the job description, calculate an ATS score, identify missing keywords and suggest improvements.",
 
   "magic-cover-letter":
-    "Write a modern, personalized and professional cover letter that sounds human and persuasive.",
+    "Write a personalized professional cover letter that sounds natural and persuasive.",
 
   "cold-email":
     "Write a concise networking email under 100 words that encourages a hiring manager to reply.",
 };
 
-// ==========================================================
+// ====================================================
 // AI GENERATOR
-// ==========================================================
-// ==========================================================
-// AI GENERATOR
-// ==========================================================
+// ====================================================
+
 router.post("/generate", async (req, res) => {
   try {
     const { prompt, toolSlug } = req.body;
@@ -57,51 +49,35 @@ router.post("/generate", async (req, res) => {
 
     const systemPrompt =
       systemPrompts[toolSlug] ??
-      "You are a professional AI assistant. Provide accurate, detailed and helpful answers.";
+      "You are a helpful AI assistant.";
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `${systemPrompt}
+
+User Request:
+
+${prompt}`,
     });
 
-    const fullPrompt = `
-${systemPrompt}
-
-==============================
-
-USER REQUEST:
-
-${prompt}
-
-==============================
-
-Respond professionally.
-`;
-
-    const result = await model.generateContent(fullPrompt);
-
-    const response = result.response;
-
-    const output = response.text();
-
-    return res.status(200).json({
+    return res.json({
       success: true,
-      output,
+      output: response.text,
     });
   } catch (error: any) {
-    console.error("========== GEMINI ERROR ==========");
-    console.error(error);
-    console.error("==================================");
+    console.error("Gemini Error:", error);
 
     return res.status(500).json({
       success: false,
-      error: error.message || "AI Generation Failed",
+      error: error.message,
     });
   }
 });
 
-// ==========================================================
-// SMART RECOMMENDATIONS
-// ==========================================================
+// ====================================================
+// RECOMMENDATIONS
+// ====================================================
+
 router.post("/recommendations", async (req, res) => {
   try {
     const { viewedItemIds } = req.body;
@@ -114,32 +90,28 @@ router.post("/recommendations", async (req, res) => {
     }
 
     const viewedItems = await Item.find({
-      _id: {
-        $in: viewedItemIds,
-      },
+      _id: { $in: viewedItemIds },
     });
 
-    const categories = viewedItems.map((item) => item.category);
+    const categories = viewedItems.map(
+      (item) => item.category
+    );
 
     const recommendations = await Item.find({
-      category: {
-        $in: categories,
-      },
-      _id: {
-        $nin: viewedItemIds,
-      },
+      category: { $in: categories },
+      _id: { $nin: viewedItemIds },
     }).limit(4);
 
-    return res.status(200).json({
+    return res.json({
       success: true,
       recommendations,
     });
   } catch (error: any) {
-    console.error("Recommendation Error:", error);
+    console.error(error);
 
     return res.status(500).json({
       success: false,
-      error: "Failed to get recommendations.",
+      error: "Failed to load recommendations.",
     });
   }
 });

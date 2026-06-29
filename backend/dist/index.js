@@ -7,40 +7,76 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const mongoose_1 = __importDefault(require("mongoose"));
-// Load Environment Variables first!
+// Load environment variables
 dotenv_1.default.config();
-// Import all our structured routes
+// Routes
 const items_1 = __importDefault(require("./routes/items"));
 const ai_1 = __importDefault(require("./routes/ai"));
 const admin_1 = __importDefault(require("./routes/admin"));
+const dashboard_1 = __importDefault(require("./routes/dashboard"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
+// Allowed Frontend Origins
+const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://ai-project-alpha-amber.vercel.app",
+];
 // Middleware
-app.use((0, cors_1.default)({ origin: "http://localhost:3000" })); // Lets Next.js talk to us
+app.use((0, cors_1.default)({
+    origin(origin, callback) {
+        // Allow requests without an Origin header (e.g. Postman)
+        if (!origin)
+            return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+}));
 app.use(express_1.default.json());
-// Connect to MongoDB
+// MongoDB Connection
+if (!process.env.MONGO_URI) {
+    throw new Error("❌ MONGO_URI is missing in your .env file");
+}
 mongoose_1.default
-    .connect(process.env.MONGO_URI || "")
-    .then(() => console.log("✅ Connected to MongoDB"))
-    .catch((err) => console.error("❌ MongoDB connection error:", err));
-// Hook up the routes
+    .connect(process.env.MONGO_URI)
+    .then(() => {
+    console.log("✅ Connected to MongoDB");
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+    });
+})
+    .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+});
+// Routes
 app.use("/api/items", items_1.default);
 app.use("/api/ai", ai_1.default);
 app.use("/api/admin", admin_1.default);
+app.use("/api/dashboard", dashboard_1.default);
+// Root Route
 app.get("/", (req, res) => {
-    res.json({ message: "Genova API is running smoothly!" });
+    res.json({
+        success: true,
+        message: "Genova API is running smoothly!",
+    });
 });
-// Error handling for Clerk Authentication failures
+// Error Handler
 app.use((err, req, res, next) => {
     if (err.message === "Unauthenticated") {
-        return res
-            .status(401)
-            .json({ error: "Unauthorized: Invalid or missing Clerk token" });
+        return res.status(401).json({
+            error: "Unauthorized: Invalid or missing Clerk token",
+        });
+    }
+    if (err.message === "Not allowed by CORS") {
+        return res.status(403).json({
+            error: "CORS Error: Origin not allowed",
+        });
     }
     console.error(err.stack);
-    res.status(500).json({ error: "Internal Server Error" });
-});
-// Start the engine
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    res.status(500).json({
+        error: "Internal Server Error",
+    });
 });
