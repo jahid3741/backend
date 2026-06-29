@@ -7,6 +7,7 @@ const express_1 = require("express");
 const Item_1 = __importDefault(require("../models/Item"));
 const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
+// GET /api/items (Search, filter, sort, pagination) - Public
 router.get("/", async (req, res) => {
     try {
         const { search, category, minPrice, maxPrice, sortBy, page = "1", limit = "10", } = req.query;
@@ -30,7 +31,7 @@ router.get("/", async (req, res) => {
         else if (sortBy === "newest")
             sortOpt.date = -1;
         else
-            sortOpt.rating = -1;
+            sortOpt.rating = -1; // default 'popular'
         const skip = (Number(page) - 1) * Number(limit);
         const items = await Item_1.default.find(query)
             .sort(sortOpt)
@@ -47,6 +48,7 @@ router.get("/", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch items" });
     }
 });
+// GET /api/items/:id - Public
 router.get("/:id", async (req, res) => {
     try {
         const item = await Item_1.default.findById(req.params.id);
@@ -58,6 +60,7 @@ router.get("/:id", async (req, res) => {
         res.status(500).json({ error: "Error fetching item" });
     }
 });
+// POST /api/items - ADMIN ONLY
 router.post("/", auth_1.requireAuth, auth_1.requireAdmin, async (req, res) => {
     try {
         const newItem = await Item_1.default.create(req.body);
@@ -67,6 +70,7 @@ router.post("/", auth_1.requireAuth, auth_1.requireAdmin, async (req, res) => {
         res.status(400).json({ error: "Failed to create item" });
     }
 });
+// PUT /api/items/:id - ADMIN ONLY
 router.put("/:id", auth_1.requireAuth, auth_1.requireAdmin, async (req, res) => {
     try {
         const updated = await Item_1.default.findByIdAndUpdate(req.params.id, req.body, {
@@ -78,6 +82,7 @@ router.put("/:id", auth_1.requireAuth, auth_1.requireAdmin, async (req, res) => 
         res.status(400).json({ error: "Failed to update item" });
     }
 });
+// DELETE /api/items/:id - ADMIN ONLY
 router.delete("/:id", auth_1.requireAuth, auth_1.requireAdmin, async (req, res) => {
     try {
         await Item_1.default.findByIdAndDelete(req.params.id);
@@ -88,4 +93,3 @@ router.delete("/:id", auth_1.requireAuth, auth_1.requireAdmin, async (req, res) 
     }
 });
 exports.default = router;
-//# sourceMappingURL=items.js.map

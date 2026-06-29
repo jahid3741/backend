@@ -44,4 +44,3 @@ const ItemSchema = new mongoose_1.Schema({
     date: { type: Date, default: Date.now },
 });
 exports.default = mongoose_1.default.model("Item", ItemSchema);
-//# sourceMappingURL=Item.js.map

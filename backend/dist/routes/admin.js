@@ -8,6 +8,7 @@ const auth_1 = require("../middleware/auth");
 const User_1 = __importDefault(require("../models/User"));
 const Item_1 = __importDefault(require("../models/Item"));
 const router = (0, express_1.Router)();
+// Lock down all admin routes!
 router.use(auth_1.requireAuth, auth_1.requireAdmin);
 router.get("/stats", async (req, res) => {
     try {
@@ -16,7 +17,7 @@ router.get("/stats", async (req, res) => {
         res.json({
             totalUsers,
             totalItems,
-            revenue: 45231,
+            revenue: 45231, // Mocked for now
             activeSessions: Math.floor(Math.random() * 500),
         });
     }
@@ -34,4 +35,3 @@ router.get("/users", async (req, res) => {
     }
 });
 exports.default = router;
-//# sourceMappingURL=admin.js.map
